@@ -17,41 +17,102 @@
   }
 }
 
-@keyframes drift {
-  from { transform: translateX(-15vw); }
-  to   { transform: translateX(115vw); }
+/* ── Farm animations ─────────────────────────────────────────────────────────── */
+
+@keyframes cloud-drift {
+  from { transform: translateX(-120px); }
+  to   { transform: translateX(calc(100vw + 120px)); }
 }
 
+@keyframes road-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-38px); }
+}
+
+@keyframes truck-cycle-right {
+  0%   { left: -70px; }
+  100% { left: calc(100% + 10px); }
+}
+
+@keyframes truck-deliver {
+  0%   { right: -70px; }
+  100% { right: calc(100% + 10px); }
+}
+
+@keyframes cow-graze {
+  0%, 100% { margin-top: 0px; }
+  50%       { margin-top: 2px; }
+}
+
+@keyframes weathervane {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes smoke {
+  0%   { transform: translateY(0) scale(1); opacity: 0.55; }
+  100% { transform: translateY(-22px) scale(2.5); opacity: 0; }
+}
+
+@keyframes robot-arm {
+  0%, 100% { transform: rotate(0deg); }
+  50%       { transform: rotate(-35deg); }
+}
+
+/* ── Evolution modal animations ─────────────────────────────────────────────── */
+
 @keyframes flash {
-  0%   { opacity: 0.9; }
+  0%   { opacity: 0.92; }
   100% { opacity: 0; }
 }
 
 @keyframes cow-shake {
   0%, 100% { transform: rotate(0deg) scale(1); }
-  20%  { transform: rotate(-8deg) scale(1.05); }
-  40%  { transform: rotate(8deg) scale(1.05); }
+  20%  { transform: rotate(-9deg) scale(1.06); }
+  40%  { transform: rotate(9deg) scale(1.06); }
   60%  { transform: rotate(-6deg) scale(1.1); }
   80%  { transform: rotate(6deg) scale(1.1); }
 }
 
 @keyframes evolve-in {
-  0%   { transform: scale(0.1) rotate(-20deg); opacity: 0; }
-  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  80%  { transform: scale(0.95) rotate(-2deg); }
+  0%   { transform: scale(0.08) rotate(-25deg); opacity: 0; }
+  55%  { transform: scale(1.22) rotate(6deg); opacity: 1; }
+  78%  { transform: scale(0.93) rotate(-2deg); }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-@layer utilities {
-  .animate-truck-drive {
-    animation: truck-drive 3s ease-in-out forwards;
-  }
+/* ── UI animations ───────────────────────────────────────────────────────────── */
 
-  /* Hide scrollbar */
-  .overflow-y-auto {
-    scrollbar-width: none;
-  }
-  .overflow-y-auto::-webkit-scrollbar {
-    display: none;
-  }
+@keyframes float-up {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-52px) scale(1.4); }
+}
+
+@keyframes pop-in {
+  0%   { transform: scale(0.5); opacity: 0; }
+  70%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(251,191,36,0.3); }
+  50%       { box-shadow: 0 0 30px rgba(251,191,36,0.9); }
+}
+
+@keyframes truck-drive {
+  0%   { transform: translateX(110%); }
+  25%  { transform: translateX(0%); }
+  75%  { transform: translateX(0%); }
+  100% { transform: translateX(-110%); }
+}
+
+@keyframes cow-bob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+/* Scrollbar suppression */
+@layer utilities {
+  .overflow-y-auto { scrollbar-width: none; }
+  .overflow-y-auto::-webkit-scrollbar { display: none; }
 }
