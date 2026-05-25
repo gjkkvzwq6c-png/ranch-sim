@@ -1,11 +1,15 @@
-import { COW_BREEDS, FARM_TIERS, UPGRADES } from './gameData';
+import { COW_TYPES, FARM_TIERS, UPGRADES } from './gameData';
 
-export function getBreed(id) {
-  return COW_BREEDS.find((b) => b.id === id) || COW_BREEDS[0];
+export function getCowType(state) {
+  return COW_TYPES[state.cowTypeIndex ?? 0] || COW_TYPES[0];
 }
 
-export function getFarm(id) {
-  return FARM_TIERS[id] || FARM_TIERS[0];
+export function getNextCowType(state) {
+  return COW_TYPES[(state.cowTypeIndex ?? 0) + 1] || null;
+}
+
+export function getFarm(state) {
+  return FARM_TIERS[state.currentFarm ?? 0] || FARM_TIERS[0];
 }
 
 export function getUpgrade(id) {
@@ -19,12 +23,14 @@ export function getUpgradeCost(upgradeId, currentLevel) {
 }
 
 export function getUpgradeLevel(state, id) {
-  return state.upgrades[id] || 0;
+  return state.upgrades?.[id] || 0;
 }
 
+// ─── Core Calculations ────────────────────────────────────────────────────────
+
 export function calcMilkPerSecond(state) {
-  const breed = getBreed(state.activeBreed);
-  const baseMPS = state.cows * breed.milkPerSecond;
+  const cowType = getCowType(state);
+  const base = (state.cows || 0) * cowType.productionRate;
 
   const feedLevel = getUpgradeLevel(state, 'better_feed');
   const feedMult = Math.pow(1.5, feedLevel);
@@ -32,33 +38,33 @@ export function calcMilkPerSecond(state) {
   const robotLevel = getUpgradeLevel(state, 'robotic_milker');
   const robotMult = Math.pow(2, robotLevel);
 
-  const prestigeMult = 1 + state.prestigeCount * 0.15;
+  const prestigeMult = 1 + (state.prestigeCount || 0) * 0.15;
 
-  return baseMPS * feedMult * robotMult * prestigeMult;
+  return base * feedMult * robotMult * prestigeMult;
 }
 
 export function calcMaxCows(state) {
-  const farm = getFarm(state.currentFarm);
+  const farm = getFarm(state);
   const barnLevel = getUpgradeLevel(state, 'bigger_barn');
   return farm.maxCows + barnLevel * 5;
 }
 
 export function calcMilkStorage(state) {
-  const base = 100 + state.currentFarm * 300;
+  const base = 100 + (state.currentFarm || 0) * 300;
   const tankLevel = getUpgradeLevel(state, 'larger_tank');
   return Math.floor(base * Math.pow(1.5, tankLevel));
 }
 
 export function calcMilkPrice(state) {
-  const base = 1 + state.currentFarm * 0.8;
+  const cowType = getCowType(state);
   const brandLevel = getUpgradeLevel(state, 'premium_brand');
   const brandMult = 1 + brandLevel * 0.5;
-  const prestigeMult = 1 + state.prestigeCount * 0.1;
-  return base * brandMult * prestigeMult;
+  const prestigeMult = 1 + (state.prestigeCount || 0) * 0.1;
+  return cowType.valuePerUnit * brandMult * prestigeMult;
 }
 
 export function calcTruckDelivery(state) {
-  const base = 30 + state.currentFarm * 50;
+  const base = 30 + (state.currentFarm || 0) * 50;
   const speedLevel = getUpgradeLevel(state, 'faster_trucks');
   const speedMult = 1 + speedLevel * 0.5;
   const intervalMs = Math.max(4000, 15000 / speedMult);
@@ -66,8 +72,8 @@ export function calcTruckDelivery(state) {
 }
 
 export function calcNextCowCost(state) {
-  const base = 5 + state.currentFarm * 15;
-  return Math.ceil(base * Math.pow(1.12, state.cows - 1));
+  const base = 5 + (state.currentFarm || 0) * 15;
+  return Math.ceil(base * Math.pow(1.12, (state.cows || 1) - 1));
 }
 
 export function calcAutoHerderInterval(level) {
@@ -75,26 +81,26 @@ export function calcAutoHerderInterval(level) {
 }
 
 export function calcPrestigeRequired(prestigeCount) {
-  return Math.pow(10, 6 + prestigeCount);
+  return Math.pow(10, 6 + (prestigeCount || 0));
 }
 
+export function calcEvolutionCost(state) {
+  const next = getNextCowType(state);
+  return next ? next.unlockCost : Infinity;
+}
+
+// Offline earnings calculation
 export function calcOfflineEarnings(savedState) {
   const now = Date.now();
-  const elapsed = Math.min((now - savedState.lastActive) / 1000, 4 * 3600);
+  const elapsed = Math.min((now - (savedState.lastActive || now)) / 1000, 4 * 3600);
   if (elapsed < 5) return null;
 
   const mps = calcMilkPerSecond(savedState);
   const milkEarned = mps * elapsed;
-
   const { amount, intervalMs } = calcTruckDelivery(savedState);
   const deliveries = Math.floor(elapsed / (intervalMs / 1000));
   const milkSold = Math.min(milkEarned, deliveries * amount);
   const moneyEarned = milkSold * calcMilkPrice(savedState);
 
-  return {
-    elapsed,
-    milkEarned,
-    moneyEarned,
-    milkSold,
-  };
+  return { elapsed, milkEarned, moneyEarned, milkSold };
 }

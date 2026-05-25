@@ -11,8 +11,10 @@ import {
   calcOfflineEarnings,
   getUpgradeCost,
   getUpgradeLevel,
+  getCowType,
+  getNextCowType,
 } from '../game/gameEngine';
-import { ACHIEVEMENTS, UPGRADES, COW_BREEDS, FARM_TIERS } from '../game/gameData';
+import { ACHIEVEMENTS, UPGRADES, COW_TYPES, FARM_TIERS } from '../game/gameData';
 import { loadState, saveState } from '../utils/storage';
 
 const INITIAL_STATE = {
@@ -21,8 +23,7 @@ const INITIAL_STATE = {
   totalMilkProduced: 0,
   totalMoneyEarned: 0,
   cows: 1,
-  activeBreed: 'backyard',
-  unlockedBreeds: ['backyard'],
+  cowTypeIndex: 0,
   currentFarm: 0,
   upgrades: {},
   achievements: {},
@@ -30,6 +31,7 @@ const INITIAL_STATE = {
   lastActive: Date.now(),
   lastDailyReward: null,
   dailyStreak: 0,
+  // computed (kept in state for easy reading)
   milkPerSecond: 0.5,
   maxCows: 10,
   milkStorage: 100,
@@ -67,7 +69,8 @@ export function useGameState() {
   const [notifications, setNotifications] = useState([]);
   const [truckVisible, setTruckVisible] = useState(false);
   const [cowPop, setCowPop] = useState(0);
-  const [activeTab, setActiveTab] = useState('upgrades');
+  const [activeTab, setActiveTab] = useState('evolve');
+  const [evolutionResult, setEvolutionResult] = useState(null); // { oldType, newType }
 
   const offlineEarnings = state._offlineEarnings || null;
 
@@ -107,7 +110,7 @@ export function useGameState() {
         milkStorage: maxStorage,
       }));
 
-      // Truck
+      // Truck delivery
       truckTimer += TICK;
       const { amount, intervalMs } = calcTruckDelivery(cur);
       if (truckTimer >= intervalMs) {
@@ -141,7 +144,7 @@ export function useGameState() {
         herderTimer = 0;
       }
 
-      // Achievements (check every 500ms)
+      // Achievements (every 500ms)
       achTimer += TICK;
       if (achTimer >= 500) {
         achTimer = 0;
@@ -181,6 +184,7 @@ export function useGameState() {
   }, []);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
+
   const addCow = useCallback(() => {
     setState((prev) => {
       const max = calcMaxCows(prev);
@@ -190,6 +194,28 @@ export function useGameState() {
       setCowPop((n) => n + 1);
       return { ...prev, money: prev.money - cost, cows: prev.cows + 1 };
     });
+  }, []);
+
+  const evolveCow = useCallback(() => {
+    setState((prev) => {
+      const nextType = getNextCowType(prev);
+      if (!nextType) return prev;
+      if (prev.money < nextType.unlockCost) return prev;
+      const oldType = getCowType(prev);
+      // Trigger animation after state update
+      setTimeout(() => setEvolutionResult({ oldType, newType: nextType }), 50);
+      return {
+        ...prev,
+        money: prev.money - nextType.unlockCost,
+        cowTypeIndex: nextType.index,
+        // Reset milk on evolution — it's a new resource phase
+        milk: 0,
+      };
+    });
+  }, []);
+
+  const dismissEvolution = useCallback(() => {
+    setEvolutionResult(null);
   }, []);
 
   const buyUpgrade = useCallback(
@@ -207,34 +233,6 @@ export function useGameState() {
           money: prev.money - cost,
           upgrades: { ...prev.upgrades, [upgradeId]: level + 1 },
         };
-      });
-    },
-    [notify]
-  );
-
-  const unlockBreed = useCallback(
-    (breedId) => {
-      setState((prev) => {
-        const breed = COW_BREEDS.find((b) => b.id === breedId);
-        if (!breed || prev.unlockedBreeds.includes(breedId)) return prev;
-        if (prev.money < breed.unlockCost) return prev;
-        notify(`${breed.emoji} ${breed.name} unlocked!`, 'success');
-        return {
-          ...prev,
-          money: prev.money - breed.unlockCost,
-          unlockedBreeds: [...prev.unlockedBreeds, breedId],
-          activeBreed: breedId,
-        };
-      });
-    },
-    [notify]
-  );
-
-  const switchBreed = useCallback(
-    (breedId) => {
-      setState((prev) => {
-        if (!prev.unlockedBreeds.includes(breedId)) return prev;
-        return { ...prev, activeBreed: breedId };
       });
     },
     [notify]
@@ -270,7 +268,7 @@ export function useGameState() {
       maxCows: 10,
       milkStorage: 100,
     });
-    notify('🌟 Farm sold! Permanent +15% bonus per prestige!', 'success');
+    notify('🌟 Farm sold! +15% permanent bonus per prestige!', 'success');
   }, [notify]);
 
   const claimDailyReward = useCallback(() => {
@@ -306,12 +304,16 @@ export function useGameState() {
     setActiveTab,
     offlineEarnings,
     dismissOffline,
-    actions: { addCow, buyUpgrade, unlockBreed, switchBreed, upgradeFarm, prestige, claimDailyReward, resetGame },
+    evolutionResult,
+    dismissEvolution,
+    actions: { addCow, evolveCow, buyUpgrade, upgradeFarm, prestige, claimDailyReward, resetGame },
     derived: {
       nextCowCost: calcNextCowCost(state),
       prestigeRequired: calcPrestigeRequired(state.prestigeCount),
       milkPct: state.milkStorage > 0 ? Math.min(1, state.milk / state.milkStorage) : 0,
       cowPct: state.maxCows > 0 ? Math.min(1, state.cows / state.maxCows) : 0,
+      cowType: getCowType(state),
+      nextCowType: getNextCowType(state),
     },
   };
 }

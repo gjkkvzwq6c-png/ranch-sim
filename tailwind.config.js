@@ -4,53 +4,41 @@ export default {
   theme: {
     extend: {
       keyframes: {
-        'cow-walk': {
-          '0%, 100%': { transform: 'translateX(0) scaleX(1)' },
-          '25%': { transform: 'translateX(12px) scaleX(1)' },
-          '50%': { transform: 'translateX(20px) scaleX(-1)' },
-          '75%': { transform: 'translateX(8px) scaleX(-1)' },
-        },
         'cow-bob': {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-4px)' },
+          '50%': { transform: 'translateY(-5px)' },
         },
         'truck-drive': {
           '0%': { transform: 'translateX(110%)' },
-          '30%': { transform: 'translateX(0%)' },
-          '70%': { transform: 'translateX(0%)' },
+          '25%': { transform: 'translateX(5%)' },
+          '75%': { transform: 'translateX(5%)' },
           '100%': { transform: 'translateX(-110%)' },
         },
         'float-up': {
-          '0%': { opacity: '1', transform: 'translateY(0)' },
-          '100%': { opacity: '0', transform: 'translateY(-40px)' },
+          '0%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+          '100%': { opacity: '0', transform: 'translateY(-50px) scale(1.3)' },
         },
         'pop-in': {
           '0%': { transform: 'scale(0.5)', opacity: '0' },
-          '70%': { transform: 'scale(1.15)' },
+          '70%': { transform: 'scale(1.1)' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
-        'bounce-btn': {
-          '0%, 100%': { transform: 'scale(1)' },
-          '50%': { transform: 'scale(0.93)' },
+        'pulse-glow': {
+          '0%, 100%': { boxShadow: '0 0 8px rgba(251,191,36,0.3)' },
+          '50%': { boxShadow: '0 0 30px rgba(251,191,36,0.9)' },
         },
-        'shine': {
+        'shimmer': {
           '0%': { backgroundPosition: '-200% center' },
           '100%': { backgroundPosition: '200% center' },
         },
-        'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 5px rgba(251,191,36,0.3)' },
-          '50%': { boxShadow: '0 0 20px rgba(251,191,36,0.8)' },
-        },
       },
       animation: {
-        'cow-walk': 'cow-walk 4s ease-in-out infinite',
         'cow-bob': 'cow-bob 2s ease-in-out infinite',
         'truck-drive': 'truck-drive 3s ease-in-out forwards',
-        'float-up': 'float-up 1.5s ease-out forwards',
+        'float-up': 'float-up 1.4s ease-out forwards',
         'pop-in': 'pop-in 0.3s ease-out forwards',
-        'bounce-btn': 'bounce-btn 0.15s ease-in-out',
-        'shine': 'shine 2s linear infinite',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'shimmer': 'shimmer 2s linear infinite',
       },
     },
   },
